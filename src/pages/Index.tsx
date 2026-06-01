@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Icon from '@/components/ui/icon';
 
-const WEDDING_DATE = new Date('2025-07-12T14:00:00');
+const WEDDING_DATE = new Date('2026-08-28T14:00:00');
+const BOTANICAL_IMG = 'https://cdn.poehali.dev/projects/990f14c3-e120-4acd-bfea-32e07c81b509/files/45c25761-1ee2-406d-ab53-cfab15c0a08e.jpg';
 
 const GALLERY_IMAGES = [
   {
@@ -87,6 +88,19 @@ export default function Index() {
   const [suggestedSong, setSuggestedSong] = useState('');
   const [songSuggestions, setSongSuggestions] = useState<string[]>([]);
 
+  // Envelope state
+  const [envelopePhase, setEnvelopePhase] = useState<'idle' | 'opening' | 'hiding' | 'done'>('idle');
+  const [envelopeShaking, setEnvelopeShaking] = useState(false);
+
+  const handleEnvelopeClick = () => {
+    if (envelopePhase !== 'idle') return;
+    setEnvelopeShaking(true);
+    setTimeout(() => setEnvelopeShaking(false), 500);
+    setTimeout(() => setEnvelopePhase('opening'), 120);
+    setTimeout(() => setEnvelopePhase('hiding'), 1000);
+    setTimeout(() => setEnvelopePhase('done'), 1950);
+  };
+
   const navItems = [
     { id: 'about', label: 'О нас' },
     { id: 'program', label: 'Программа' },
@@ -124,11 +138,58 @@ export default function Index() {
   return (
     <div style={{ background: 'var(--cream)', minHeight: '100vh' }}>
 
+      {/* ── ENVELOPE SCREEN ── */}
+      {envelopePhase !== 'done' && (
+        <div className={`envelope-screen${envelopePhase === 'hiding' ? ' hiding' : ''}`}>
+          {/* Corner botanical decorations */}
+          <img src={BOTANICAL_IMG} alt="" aria-hidden style={{ position:'absolute', top:0, left:0, width:'clamp(180px,30vw,360px)', opacity:0.7, transform:'rotate(0deg)', pointerEvents:'none' }} />
+          <img src={BOTANICAL_IMG} alt="" aria-hidden style={{ position:'absolute', top:0, right:0, width:'clamp(180px,30vw,360px)', opacity:0.7, transform:'scaleX(-1)', pointerEvents:'none' }} />
+          <img src={BOTANICAL_IMG} alt="" aria-hidden style={{ position:'absolute', bottom:0, left:0, width:'clamp(160px,25vw,300px)', opacity:0.5, transform:'scaleY(-1)', pointerEvents:'none' }} />
+          <img src={BOTANICAL_IMG} alt="" aria-hidden style={{ position:'absolute', bottom:0, right:0, width:'clamp(160px,25vw,300px)', opacity:0.5, transform:'scale(-1,-1)', pointerEvents:'none' }} />
+
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:0 }}>
+            <div
+              className={`envelope-wrap${envelopePhase === 'opening' ? ' opening' : ''}${envelopeShaking ? ' shaking' : ''}`}
+              onClick={handleEnvelopeClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => e.key === 'Enter' && handleEnvelopeClick()}
+            >
+              {/* Petals */}
+              <span className="petal">🌸</span>
+              <span className="petal">🌿</span>
+              <span className="petal">✿</span>
+              <span className="petal">🌸</span>
+              <span className="petal">🍃</span>
+
+              <div className="envelope-body">
+                {/* Lid */}
+                <div className={`envelope-lid${envelopePhase === 'opening' ? ' open' : ''}`}>
+                  <div className="envelope-lid-front" />
+                </div>
+                {/* Letter */}
+                <div className={`envelope-letter${envelopePhase === 'opening' ? ' rising' : ''}`}>
+                  <span style={{ fontFamily:'Cormorant Garamond, serif', fontStyle:'italic', fontSize:'1.05rem', color:'var(--sage)', letterSpacing:'0.06em' }}>Р & М</span>
+                  <span style={{ fontFamily:'Golos Text, sans-serif', fontSize:'0.65rem', letterSpacing:'0.2em', textTransform:'uppercase', color:'var(--text-muted)' }}>28 · 08 · 2026</span>
+                </div>
+                {/* Wax seal */}
+                <div className={`envelope-seal${envelopePhase === 'opening' ? ' open' : ''}`}>♡</div>
+              </div>
+            </div>
+
+            <p className="envelope-hint">Нажми, чтобы открыть</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <div className={envelopePhase === 'done' ? 'main-content-enter' : ''} style={{ opacity: envelopePhase === 'done' ? undefined : 0, pointerEvents: envelopePhase === 'done' ? undefined : 'none' }}>
+
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 nav-glass" style={{ borderBottom: '1px solid var(--warm-beige)' }}>
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between h-16">
           <button onClick={() => scrollTo('hero')} className="font-display text-xl italic" style={{ color: 'var(--sage)', letterSpacing: '0.04em' }}>
-            А & М
+            Р & М
           </button>
           <div className="hidden md:flex items-center gap-8">
             {navItems.map(item => (
@@ -157,13 +218,12 @@ export default function Index() {
       </nav>
 
       {/* HERO */}
-      <section id="hero" className="relative min-h-screen flex flex-col items-center justify-center hero-texture pt-16">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-          <span className="animate-float absolute top-24 left-[8%] text-5xl opacity-20" style={{ animationDelay: '0s' }}>🌿</span>
-          <span className="animate-float absolute top-40 right-[10%] text-4xl opacity-15" style={{ animationDelay: '1.5s' }}>🌸</span>
-          <span className="animate-float absolute bottom-40 left-[15%] text-3xl opacity-15" style={{ animationDelay: '0.8s' }}>🍃</span>
-          <span className="animate-float absolute bottom-32 right-[12%] text-4xl opacity-20" style={{ animationDelay: '2s' }}>🌾</span>
-        </div>
+      <section id="hero" className="relative min-h-screen flex flex-col items-center justify-center pt-16" style={{ background: '#fefcf9' }}>
+        {/* Botanical corner decorations */}
+        <img src={BOTANICAL_IMG} alt="" aria-hidden className="absolute top-0 left-0 pointer-events-none select-none" style={{ width: 'clamp(200px,28vw,380px)', opacity: 0.65 }} />
+        <img src={BOTANICAL_IMG} alt="" aria-hidden className="absolute top-0 right-0 pointer-events-none select-none" style={{ width: 'clamp(200px,28vw,380px)', opacity: 0.65, transform: 'scaleX(-1)' }} />
+        <img src={BOTANICAL_IMG} alt="" aria-hidden className="absolute bottom-0 left-0 pointer-events-none select-none" style={{ width: 'clamp(160px,22vw,300px)', opacity: 0.45, transform: 'scaleY(-1)' }} />
+        <img src={BOTANICAL_IMG} alt="" aria-hidden className="absolute bottom-0 right-0 pointer-events-none select-none" style={{ width: 'clamp(160px,22vw,300px)', opacity: 0.45, transform: 'scale(-1,-1)' }} />
 
         <div className="text-center px-6 max-w-2xl relative z-10">
           <div className="text-xs uppercase tracking-[0.3em] mb-8 opacity-0 animate-fade-in"
@@ -173,15 +233,15 @@ export default function Index() {
 
           <h1 className="font-display italic opacity-0 animate-fade-up"
             style={{ fontSize: 'clamp(4rem, 14vw, 9rem)', fontWeight: 300, lineHeight: 1.05, color: 'var(--text-dark)', animationFillMode: 'forwards', animationDelay: '0.4s' }}>
-            Анна
-            <span style={{ color: 'var(--sage)', display: 'block' }}>&</span>
-            Михаил
+            Рустам
+            <span style={{ color: 'var(--sage)', display: 'block', fontSize: '0.6em' }}>&</span>
+            Мария
           </h1>
 
           <div className="mt-8 opacity-0 animate-fade-in" style={{ animationFillMode: 'forwards', animationDelay: '0.9s' }}>
             <div className="flex items-center justify-center gap-6 mb-4">
               <div style={{ height: '1px', background: 'var(--warm-beige)', width: '60px' }} />
-              <span className="font-display italic text-2xl" style={{ color: 'var(--warm-brown)' }}>12 июля 2025</span>
+              <span className="font-display italic text-2xl" style={{ color: 'var(--warm-brown)' }}>28 августа 2026</span>
               <div style={{ height: '1px', background: 'var(--warm-beige)', width: '60px' }} />
             </div>
             <p className="text-sm tracking-widest uppercase" style={{ color: 'var(--text-muted)', fontFamily: 'Golos Text' }}>
@@ -232,16 +292,16 @@ export default function Index() {
             <RevealBlock delay={100}>
               <div className="relative">
                 <div className="absolute -top-4 -left-4 w-full h-full" style={{ border: '1px solid var(--warm-beige)' }} />
-                <img src={GALLERY_IMAGES[1].url} alt="Анна и Михаил" className="w-full object-cover relative z-10" style={{ aspectRatio: '4/5' }} />
+                <img src={GALLERY_IMAGES[1].url} alt="Рустам и Мария" className="w-full object-cover relative z-10" style={{ aspectRatio: '4/5' }} />
               </div>
             </RevealBlock>
 
             <RevealBlock delay={250}>
               <div className="space-y-8">
                 {[
-                  { icon: 'Heart', title: 'Как мы встретились', text: 'Наша история началась весной 2021 года на общей вечеринке друзей. Михаил рассказывал о горных походах, а Анна слушала с улыбкой — и с того вечера мы не расставались.' },
-                  { icon: 'MapPin', title: 'Предложение', text: 'Михаил сделал предложение на закате в горах Карачаево-Черкессии — именно там, где оба мечтали оказаться вместе. Она сказала «да», не раздумывая ни секунды.' },
-                  { icon: 'Calendar', title: '12 июля 2025', text: 'Мы выбрали лето — тепло, природа и близкие люди рядом. Будем рады разделить этот день с вами.' },
+                  { icon: 'Heart', title: 'Как мы встретились', text: 'Наша история началась в 2022 году — случайная встреча, которая изменила всё. Рустам улыбнулся, Мария ответила тем же — и больше мы не расставались.' },
+                  { icon: 'MapPin', title: 'Предложение', text: 'Рустам сделал предложение на берегу моря на закате — с цветами, тихой музыкой и словами, которые Мария будет помнить всю жизнь. Она сказала «да».' },
+                  { icon: 'Calendar', title: '28 августа 2026', text: 'Мы выбрали конец лета — тепло, зелень и самые близкие люди рядом. Будем счастливы разделить этот день с вами.' },
                 ].map(item => (
                   <div key={item.title} className="flex gap-5 items-start">
                     <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--warm-beige)' }}>
@@ -426,7 +486,7 @@ export default function Index() {
           <RevealBlock className="text-center mb-12">
             <span className="text-xs uppercase tracking-[0.3em]" style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'Golos Text' }}>Ждём вас</span>
             <h2 className="font-display italic mt-3" style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', color: 'white', fontWeight: 300 }}>Подтверждение</h2>
-            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'Golos Text' }}>Пожалуйста, ответьте до 1 июня 2025</p>
+            <p className="mt-4 text-sm" style={{ color: 'rgba(255,255,255,0.55)', fontFamily: 'Golos Text' }}>Пожалуйста, ответьте до 1 июля 2026</p>
           </RevealBlock>
 
           {rsvpSent ? (
@@ -505,10 +565,12 @@ export default function Index() {
 
       {/* FOOTER */}
       <footer className="py-16 px-6 text-center" style={{ background: 'var(--text-dark)' }}>
-        <div className="font-display italic text-4xl mb-3" style={{ color: 'white', fontWeight: 300 }}>А & М</div>
-        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'Golos Text' }}>12 июля 2025 · Поместье «Лесная усадьба»</p>
+        <div className="font-display italic text-4xl mb-3" style={{ color: 'white', fontWeight: 300 }}>Р & М</div>
+        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'Golos Text' }}>28 августа 2026 · Поместье «Лесная усадьба»</p>
         <p className="text-xs mt-8" style={{ color: 'rgba(255,255,255,0.2)', fontFamily: 'Golos Text' }}>Сделано с любовью ♡</p>
       </footer>
+
+      </div>{/* end main-content wrapper */}
     </div>
   );
 }
