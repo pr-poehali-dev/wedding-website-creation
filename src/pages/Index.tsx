@@ -60,6 +60,111 @@ function useCountdown(target: Date) {
   return timeLeft;
 }
 
+function DiagTimeline() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [ballPos, setBallPos] = useState({ x: 0, y: 0 });
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const nodeRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // On mount: place ball at first node, then animate on scroll
+  useEffect(() => {
+    const update = () => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const wrapRect = wrap.getBoundingClientRect();
+      const winH = window.innerHeight;
+
+      let best = -1;
+      for (let i = nodeRefs.current.length - 1; i >= 0; i--) {
+        const el = nodeRefs.current[i];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        const center = r.top + r.height / 2;
+        if (center < winH * 0.72) { best = i; break; }
+      }
+      if (best < 0) best = 0;
+      setActiveIdx(best);
+
+      const el = nodeRefs.current[best];
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const x = r.left + r.width / 2 - wrapRect.left;
+        const y = r.top + r.height / 2 - wrapRect.top;
+        setBallPos({ x, y });
+      }
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="diag-timeline" style={{ position: 'relative' }}>
+      {/* Rolling ball */}
+      <div
+        className="diag-ball"
+        style={{ left: ballPos.x, top: ballPos.y }}
+      />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        {PROGRAM.map((item, i) => {
+          const isOdd = i % 2 === 0;
+          const isActive = i <= activeIdx;
+          return (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                paddingLeft: isOdd ? '0' : 'clamp(40px, 30%, 200px)',
+                paddingRight: isOdd ? 'clamp(40px, 30%, 200px)' : '0',
+                opacity: isActive ? 1 : 0.4,
+                transform: isActive ? 'none' : 'translateY(6px)',
+                transition: 'opacity 0.6s ease, transform 0.6s ease',
+              }}
+            >
+              {/* Node */}
+              <div
+                ref={el => { nodeRefs.current[i] = el; }}
+                className="diag-node"
+                style={{
+                  background: isActive
+                    ? 'radial-gradient(circle at 35% 30%, #8aaa8e, var(--sage-dark))'
+                    : 'var(--warm-beige)',
+                  boxShadow: isActive ? '0 4px 16px rgba(90,122,94,0.3)' : 'none',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon name={item.icon} size={18} style={{ color: isActive ? 'white' : 'var(--text-muted)' }} />
+              </div>
+
+              {/* Card */}
+              <div className="diag-card" style={{ marginTop: `${i * 10}px` }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+                  <span className="font-display italic" style={{ fontSize: '1.2rem', color: 'var(--text-dark)' }}>{item.title}</span>
+                  <span style={{
+                    fontFamily: 'Golos Text, sans-serif',
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: isActive ? 'var(--sage)' : 'var(--text-muted)',
+                    fontWeight: 600,
+                  }}>{item.time}</span>
+                </div>
+                <p style={{ fontFamily: 'Golos Text, sans-serif', fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.65, margin: 0 }}>
+                  {item.desc}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function RevealBlock({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -320,31 +425,13 @@ export default function Index() {
       </section>
 
       {/* PROGRAM */}
-      <section id="program" className="py-28 px-6" style={{ background: 'var(--warm-beige)' }}>
+      <section id="program" className="py-28 px-6 overflow-hidden" style={{ background: 'var(--warm-beige)' }}>
         <div className="max-w-3xl mx-auto">
           <RevealBlock className="text-center mb-20">
             <span className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--sage-light)', fontFamily: 'Golos Text' }}>Расписание дня</span>
             <h2 className="font-display italic mt-3" style={{ fontSize: 'clamp(2.5rem, 6vw, 4rem)', color: 'var(--text-dark)', fontWeight: 300 }}>Программа</h2>
           </RevealBlock>
-
-          <div>
-            {PROGRAM.map((item, i) => (
-              <RevealBlock key={i} delay={i * 80}>
-                <div className="flex gap-6 items-start py-6" style={{ borderBottom: i < PROGRAM.length - 1 ? '1px solid rgba(139,111,94,0.2)' : 'none' }}>
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-1" style={{ background: 'var(--sage)' }}>
-                    <Icon name={item.icon} size={15} className="text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-4 mb-1 flex-wrap">
-                      <span className="font-display italic text-xl" style={{ color: 'var(--text-dark)' }}>{item.title}</span>
-                      <span className="text-xs uppercase tracking-widest" style={{ color: 'var(--sage-light)', fontFamily: 'Golos Text' }}>{item.time}</span>
-                    </div>
-                    <p style={{ color: 'var(--text-muted)', fontFamily: 'Golos Text', fontSize: '0.9rem', lineHeight: 1.6 }}>{item.desc}</p>
-                  </div>
-                </div>
-              </RevealBlock>
-            ))}
-          </div>
+          <DiagTimeline />
         </div>
       </section>
 
